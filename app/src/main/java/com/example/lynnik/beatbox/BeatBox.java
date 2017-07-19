@@ -1,6 +1,7 @@
 package com.example.lynnik.beatbox;
 
 import android.content.Context;
+import android.content.res.AssetFileDescriptor;
 import android.content.res.AssetManager;
 import android.media.AudioManager;
 import android.media.SoundPool;
@@ -17,7 +18,7 @@ public class BeatBox {
   private static final int MAX_SOUNDS = 5;
 
   private AssetManager mAssetManager;
-  private List<Sound> mSounds = new ArrayList<>();
+  private List<Sound> mSounds;
   private SoundPool mSoundPool;
 
   public BeatBox(Context context) {
@@ -36,11 +37,23 @@ public class BeatBox {
       return;
     }
 
+    mSounds = new ArrayList<>();
     for (String filename : soundNames) {
-      String assetPath = SOUNDS_FOLDER + "/" + filename;
-      Sound sound = new Sound(assetPath);
-      mSounds.add(sound);
+      try {
+        String assetPath = SOUNDS_FOLDER + "/" + filename;
+        Sound sound = new Sound(assetPath);
+        load(sound);
+        mSounds.add(sound);
+      } catch (IOException ioe) {
+        Log.e(TAG, "Could not load sound " + filename, ioe);
+      }
     }
+  }
+
+  private void load(Sound sound) throws IOException {
+    AssetFileDescriptor afd = mAssetManager.openFd(sound.getAssetPath());
+    int soundId = mSoundPool.load(afd, 1);
+    sound.setSoundId(soundId);
   }
 
   public List<Sound> getSounds() {
